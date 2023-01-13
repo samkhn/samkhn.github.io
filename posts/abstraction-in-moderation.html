@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming, software, unreadable, engineering, abstraction, moderation">
+
+    <style>
+      
+    </style>
+    
+    <title> Abstraction, in moderation. </title>
+  </head>
+
+  <body>
+    
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+    
+    <h2 style="text-align: center;"> Abstraction, in moderation. </h2>
+
+    <div class="date" style="text-align: center;"><small> Published: January 13, 2023</small></div>
+    <br /> <p />
+
+&nbsp;&nbsp;&nbsp;&nbsp;Abstractions are everywhere in software. Operating systems are an abstraction over hardware that make computers secure, interactive, and accessible. Many tech companies sell abstractions as a key offering: Google Cloud and AWS provide an abstraction for cloud-based VMs, Stripe provides an abstraction over financial infrastructure, Docker provides an abstraction over operating systems so that developers can deploy in more places, etc. It's evident that abstractions allow organizations to save costs by re-using other people's work and by helping form a lingua franca for discussing technical ideas. Despite all of this, I still think abstraction should be practiced in moderation.
+    <br /> <p />
+    
+&nbsp;&nbsp;&nbsp;&nbsp;New programmers learn abstractions through function calls, OOP and interfaces. Some students may even dive deeper into object oriented programming and learn about the dangers of over-exposed APIs. They introduce copy/move constructors. They defend their data with get and set functions that prevent state changes. They may end up with something like this (they haven't learned about templates yet):
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">class CharVector {
+<span style="color: #A0A000">public:</span>
+  CharVector() {...}
+  CharVector(<span style="color: #B00040">char</span><span style="color: #666666">*</span> new) {...}
+  CharVector(CharVector<span style="color: #666666">&amp;&amp;</span> other) {...}
+  CharVector<span style="color: #666666">&amp;</span> operator<span style="color: #666666">=</span>(CharVector<span style="color: #666666">&amp;&amp;</span> other) {...}
+  <span style="color: #408080; font-style: italic">// Copy constructor disallowed</span>
+  <span style="color: #408080; font-style: italic">// Getter/setter</span>
+  <span style="color: #B00040">size_t</span> Length() <span style="color: #008000; font-weight: bold">const</span> { <span style="color: #008000; font-weight: bold">return</span> len_; }
+<span style="color: #A0A000">private:</span>
+  <span style="color: #B00040">size_t</span> resize();
+  <span style="color: #B00040">double</span> load_factor_;
+  <span style="color: #B00040">size_t</span> len_;
+  <span style="color: #B00040">char</span> <span style="color: #666666">*</span>memory_;
+};
+
+<span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">const</span> <span style="color: #B00040">char</span><span style="color: #666666">*</span> kMessage <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;Hello&quot;</span>;
+
+<span style="color: #B00040">int</span> <span style="color: #0000FF">main</span>(<span style="color: #B00040">int</span> argc, <span style="color: #B00040">char</span> <span style="color: #666666">**</span>argv) {
+  CharVector cv(kMessage);
+  <span style="color: #B00040">size_t</span> length <span style="color: #666666">=</span> cv.Length();
+}
+</pre></div><br />
+
+Now...is this better than just declaring
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">const</span> <span style="color: #B00040">char</span><span style="color: #666666">*</span> kMessage <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;Hello&quot;</span>;
+<span style="color: #008000; font-weight: bold">static</span> <span style="color: #B00040">size_t</span> kMessageLen <span style="color: #666666">=</span> <span style="color: #666666">5</span>;
+</pre></div>
+and then using kMessage and kMessageLen? <em>Globals are dangerous:</em> Sure but how is this program being used? How would the autograder that is going to run this software going to misuse this? This is a toy program used to practice/demonstrate conceptual understanding. My program is noticably simpler if I just use these things that are deemed dangerous. When students and young programmers are told something is dangerous, many will opt towards never using them rather than learning the costs and benefits of a tool. The example above alludes to my original statement: abstraction (and frankly everything) should be used in moderation and in light of what <em>needs</em> to get done. For most, a program runs on a server or our own machine, on top of a processor and memory and maybe some disk storage (on hardware NOT in a browser NOT in Linux/Windows). If we don't have security or the engineering requirements of a large company, let's not introduce patterns that work for them that won't work for us.
+    <br /> <p />
+
+&nbsp;&nbsp;&nbsp;&nbsp;The example can be a little elementary so let me go through a more concrete example: Docker. Docker is an abstraction (docker->OS) of an abstraction (OS->hw). Docker is built on the idea of namespaces and cgroups from the Linux Kernel. Google engineers proposed control groups as a way for (groups of) processes to have scoped set of resources from the kernel and prevent any single process from forcing other processes to OOM. As you may already be able to tell, Docker isn't really used to prevent one process from exhausting another. Rather, Docker is used so that you can ship your program anywhere and not have to worry about dependencies. Instead of just cloning a repo and then recreating the developer's environment manually, Docker (and dockerfiles+dockerhub) simplifies the process of spinning up a general dev environment. <br/>
+
+(this is my blog so I'm going to rant: This is cool and all...but Docker is a band aid to make development easier. In the end, every binary will run on an Intel, ARM, IBM PowerPC chip with memory on the bus. Docker ends up slowing development down by adding a hidden conversion cost to each compilation, unit test, regression test. We are silently paying for it as an abstraction. This is a discussion for another day.).
+    <br /> <p />
+
+    <h4> The geometry(?) of abstraction </h4>
+&nbsp;&nbsp;&nbsp;&nbsp;Like any conceptual tool, you should build abstractions when the benefit it brings outweights the cost. Here is an (not very flushed out) idea for how to reason about abstraction: (1) I think we should reason about software complexity by correlating it to size and (2) software size can be understood in 2 dimensions: LOC and jumps/stack frames.
+    <br /> <p />
+    
+&nbsp;&nbsp;&nbsp;&nbsp;Let's start with #2 (software size can be understood in 2 dimensions: LOC and jumps/stack frames) and assume #1 (for now). In the code example above, the class abstraction of the msg* increased the line count more than it saved. Let's say that line <em>width</em> is fixed at some value like 80 or 100. This let's us reason about code complexity as correlating code LOC, which correlates with the <em>area</em> of a single file or stack. An abstraction may or may not reduce LOC but it definitely increases the <em>height</em> by introducing a new frame/scope. Each use of an abstraction aims to reduce length by increasing height.
+    <!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #B00040">void</span> Foo()
+<span style="color: #666666">-&gt;</span> <span style="color: #B00040">void</span> Bar()
+<span style="color: #666666">---&gt;</span> <span style="color: #B00040">void</span> Baz()
+<span style="color: #666666">-----&gt;</span> <span style="color: #B00040">void</span> Faz()
+</pre></div>
+In the snippet, we have a height of four while implementing Foo, Bar, Baz, and Faz has reduced LOC elsewhere. From this, we can reason about <b>managing software complexity as a balancing act between this length and height where the length should always be greater than the height</b>. I'm not sure what the ratio between length and height should be, though.
+    <br /> <p />
+
+&nbsp;&nbsp;&nbsp;&nbsp;Let's go back to #1 (software complexity correlates to size). I think this is a fair assumption or axiom. I want to define simple as "no longer reducible." Whenever a programmer debugs, they are running through the program in their head. Each line the programmer reads updates the running state of relevant objects. Each function call and jump introduces a new stack frame to mentally track. Each abstraction can reduce the number of lines they need to reason about but it introduces the cost of reasoning about a function call.
+    <br /> <p />
+
+&nbsp;&nbsp;&nbsp;&nbsp;So does this (likely incomplete) geometric interpretation of abstraction and complexity apply to Docker abstracting the OS and exec formats and to operating systems abstracting hardware? Yes! The Dockerfile ends up playing a similar role to CMake and GNU configure scripts (they scan system dependencies and configure the compilable unit to the machine). Each Dockerfile gets parsed and "executed" line by line to change the running state. Each state change is incredibly powerful, loading entire OS images and installing packages/dependencies. Although I do think Docker is a band aid to the problem of operating systems not working together (read: Windows PE format), it provides a powerful and useful abstraction.
+    <br /> <p />
+
+&nbsp;&nbsp;&nbsp;&nbsp;The geometric interpretation of software complexity allows a programmer to reason about whether an abstraction can bring a benefit using the height:length ratio. Clearly, this interpretation is incomplete so if you (reader) have ways to extend this or interesting edge cases where this might fail, let me know (email on top of the page).
+    <br /> <p />
+    
+&nbsp;&nbsp;&nbsp;&nbsp;An interesting aside I noticed when writing this: more abstraction can help improve profiling data but make debugging a little more unclear. If you aren't using a profiler like Intel VTune or linux perf, you can use a debugger as a sampling profiler by trying to break/pause the debugger during each execution of a program (more likely than not, you will sample and stop at the true bottleneck of your binary). With more abstraction/stack frames, this poor man's profiler will land closer to the true bottleneck. However, with more abstractions, you will have more stack frames to pop during debugging, which means a more complex program to reason about.
+    <br /> <p />
+  </body>
+  
+</html>
