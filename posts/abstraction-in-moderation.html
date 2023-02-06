@@ -65,11 +65,9 @@ and then using kMessage and kMessageLen? <em>Globals are dangerous:</em> Sure bu
     <br /> <p />
 
 &nbsp;&nbsp;&nbsp;&nbsp;The example can be a little elementary so let me go through a more concrete example: Docker. Docker is an abstraction (docker->OS) of an abstraction (OS->hw). Docker is built on the idea of namespaces and cgroups from the Linux Kernel. Google engineers proposed control groups as a way for (groups of) processes to have scoped set of resources from the kernel and prevent any single process from forcing other processes to OOM. As you may already be able to tell, Docker isn't really used to prevent one process from exhausting another. Rather, Docker is used so that you can ship your program anywhere and not have to worry about dependencies. Instead of just cloning a repo and then recreating the developer's environment manually, Docker (and dockerfiles+dockerhub) simplifies the process of spinning up a general dev environment. <br/>
-
-(this is my blog so I'm going to rant: This is cool and all...but Docker is a band aid to make development easier. In the end, every binary will run on an Intel, ARM, IBM PowerPC chip with memory on the bus. Docker ends up slowing development down by adding a hidden conversion cost to each compilation, unit test, regression test. We are silently paying for it as an abstraction. This is a discussion for another day.).
     <br /> <p />
 
-    <h4> The geometry(?) of abstraction </h4>
+    <h4> The geometry of abstraction </h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Like any conceptual tool, you should build abstractions when the benefit it brings outweights the cost. Here is an (not very flushed out) idea for how to reason about abstraction: (1) I think we should reason about software complexity by correlating it to size and (2) software size can be understood in 2 dimensions: LOC and jumps/stack frames.
     <br /> <p />
     
