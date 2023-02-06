@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming, LLVM, clang, compiler development. LLVM+Windows, gotchas, win32">
+
+    <style>
+    </style>
+
+    <title> Setup LLVM development on Windows </title>
+  </head>
+
+  <body>
+    
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+      
+      <h2 style="text-align: center;"> Setup LLVM development on Windows </h2>
+
+      <div class="date" style="text-align: center;"><small> Published: February 5, 2023</small></div>
+      <br /> <p />
+
+    <p> Recommendation 0: Read the docs mainly. LLVM docs are actually good. This will cover some areas in between what's documented and what works. I'll try to eventually merge this into the mainline LLVM docs. </p>
+
+    <p> Recommendation 1: Create a shell just for LLVM. First create a batch script that sets the PATH to LLVM dependencies (called something like <code>llvm-setup.bat</code>). Create a shortcut for cmd.exe. Have the shortcut run <code>%comspec% /k "C:\path\to\llvm-setup.bat"</code>.</p>
+    <p> Here is what I ended up using </p>
+    <code>
+      <ul style="list-style-type: none;">
+	<li>&nbsp;</li>
+	<li>@ECHO OFF</li>
+	<li>&nbsp;</li>
+	<li>:: LLVM Project Shell</li>
+	<li>:: Sets path so that LLVM can build</li>
+	<li>SET PROJDIR=C:\path\to\llvm-project</li>
+	<li>&nbsp;</li>
+	<li>SET "PATH=C:\Program Files (x86)\GnuWin32\bin;%PATH%"</li>
+	<li>SET "PATH=C:\Program Files\SWIG\swigwin-4.1.1;%PATH%"</li>
+	<li>SET "PATH=C:\Program Files\Python311;%PATH%"</li>
+	<li>IF NOT DEFINED DevEnvDir (</li>
+	<li>  CALL "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul</li>
+	<li>)</li>
+	<li>SET "PATH=C:\Program Files\CMake\bin;%PATH%"</li>
+	<li>&nbsp;</li>
+	<li>PUSHD %PROJDIR%</li>
+	<li>&nbsp;</li>
+      </ul>
+    </code>
+
+    <p> Some nice features of the batch script </p>
+    <ul>
+      <li>ECHO OFF keeps cmd prompt clean.</li>
+      <li>User and System PATH remains clean.</li>
+      <li>We add a newer version of CMake so we can have some of the latest features. We prepend CMake to the path so that it takes priority over the Visual Studio CMake.</li>
+      <li>PUSHD pushes the LLVM directory onto a stack. If you invoke POPD, you'll be placed back to wherever you called PUSHD from.</li>
+    </ul>
+    
+    <p> Recommendation 2: PTAL at path\to\llvm-project\llvm\utils. Emacs, vim and editor configs are stored here. </p>
+
+    <p> Recommendation 3: Create your own build script that calls CMake (unless you want to manually type it in). </p>
+    <p> Here is what I ended up using (assuming you are using the LLVM shell, which gives access to 64 bit MSVC cl.exe) </p>
+    <code>
+      <ul style="list-style-type: none;">
+	<li>&nbsp;</li>
+	<li>@ECHO OFF</li>
+	<li>&nbsp;</li>
+	<li>:: LLVM build</li>
+	<li>SET DBGDIR=%PROJECTDIR%\build-debug</li>
+	<li>&nbsp;</li>
+	<li>:: Tells CMake to Use CL, not Clang, to build binaries</li>
+	<li>SET CC=cl.exe</li>
+	<li>SET CXX=cl.exe</li>
+	<li>&nbsp;</li>
+	<li>SET "NINJAx86=-GNinja -DLLVM_TARGETS_TO_BUILD=X86"</li>
+	<li>SET "LLDBDBGOPTS=-DLLDB_TEST_DEBUG_TEST_CRASHES=1 -DLLDB_EXPORT_ALL_SYMBOLS=1"</li>
+	<li>SET LLVMDIR=C:\LLVM\llvm</li>
+	<li>&nbsp;</li>
+	<li>IF NOT EXIST %DBGDIR% MKDIR %DBGDIR%</li>
+	<li>cmake %NINJAx86% -B %DBGDIR% -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS="clang;lld;lldb" %LLDBDBGOPTS% -S %LLVMDIR%</li>
+	<li>&nbsp;</li>
+      </ul>
+    </code>
+
+    <u>Some gotchas to look out for</u>
+
+    <ul>
+      <li>Use <code>-S C:\path\to\llvm-proj\llvm</code>, regardless of what you intend to build (passed to <code>-DLLVM_ENABLE_PROJECTS</code>). I missed this and thought I needed to pass C:\path\to\llvm-proj\clang to build clang.</li>
+      <li>Use MSVC toolchain (not the released LLVM binaries found on their page). When you use clang, the cmake scripts look for LLVM headers. These don't exist IIUC, since the Windows version of clang uses MSVC libraries under the hood.</li>
+      <li>Use 64 bit link.exe. When I accidently used the 32 bit linker, I smelled the inside of the laptop for the first time after CPU utilization hit 100%, memory usage hit 100% and the fans went into 100% their intended frequencey. So pass <code>x64</code> to vcvarsall.bat or open the 64 bit tooling VsDevCmd EVEN IF you are generating Ninja build files. Otherwise, it might use the default 32 bit linker.</li>
+      <li>Use <code>-DLLVM_TARGETS_TO_BUILD=X86</code>, replacing x86 with your desired architecture. Otherwise, you will build for all hardware architectures. </li>
+    </ul>
+
+    
+  </body>
+  
+</html>
