@@ -88,13 +88,14 @@
       </ul>
     </code>
 
-    <u>Some gotchas to look out for</u>
+    <u>Some suggestions and gotchas to look out for</u>
 
     <ul>
       <li>Use <code>-S C:\path\to\llvm-proj\llvm</code>, regardless of what you intend to build (passed to <code>-DLLVM_ENABLE_PROJECTS</code>). I missed this and thought I needed to pass C:\path\to\llvm-proj\clang to build clang.</li>
       <li>Use MSVC toolchain (not the released LLVM binaries found on their page). When you use clang, the cmake scripts look for LLVM headers. These don't exist IIUC, since the Windows version of clang uses MSVC libraries under the hood.</li>
       <li>Use 64 bit link.exe. When I accidently used the 32 bit linker, I smelled the inside of the laptop for the first time after CPU utilization hit 100%, memory usage hit 100% and the fans went into 100% their intended frequencey. So pass <code>x64</code> to vcvarsall.bat or open the 64 bit tooling VsDevCmd EVEN IF you are generating Ninja build files. Otherwise, it might use the default 32 bit linker.</li>
       <li>Use <code>-DLLVM_TARGETS_TO_BUILD=X86</code>, replacing x86 with your desired architecture. Otherwise, you will build for all hardware architectures. </li>
+	  <li>Use release with asserts: <code>-DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON </code></li>
     </ul>
 
     
