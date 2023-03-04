@@ -96,6 +96,7 @@
       <li>Use 64 bit link.exe. When I accidently used the 32 bit linker, I smelled the inside of the laptop for the first time after CPU utilization hit 100%, memory usage hit 100% and the fans went into 100% their intended frequencey. So pass <code>x64</code> to vcvarsall.bat or open the 64 bit tooling VsDevCmd EVEN IF you are generating Ninja build files. Otherwise, it might use the default 32 bit linker.</li>
       <li>Use <code>-DLLVM_TARGETS_TO_BUILD=X86</code>, replacing x86 with your desired architecture. Otherwise, you will build for all hardware architectures. </li>
 	  <li>Use release with asserts: <code>-DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON </code></li>
+	  <li><b>Probably the most impactful advice:</b> reduce the number of parallel builds. On my machine (12 core Intel i5), my processor often overheated and froze to preserve itself when running all cores at once. Once I ran with 6 cores, build time increased but they completed.</li>
     </ul>
 
     
