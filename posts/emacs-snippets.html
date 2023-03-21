@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming, emacs, snippets, elisp">
+
+    <style>
+    </style>
+
+    <title> Useful Emacs Snippets </title>
+  </head>
+
+  <body>
+    
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+    
+    <h2 style="text-align: center;"> Useful Emacs Snippets </h2>
+
+    <div class="date" style="text-align: center;"><small> Published: March 22, 2023</small></div>
+    <br /> <p />
+    <table cellspacing=0 cellpadding=0 border=0>
+      <tr>
+        <td width=10 />
+        <td valign=top>
+		  <div>
+			<p> Speed up emacs startup by tuning the garbage collector </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #408080; font-style: italic">;; At the start</span>
+(<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">gc-cons-threshold</span> <span style="color: #19177C">402653184</span>
+      <span style="color: #19177C">gc-cons-percentage</span> <span style="color: #19177C">0.6</span>
+      <span style="color: #19177C">file-name-handler-alist</span> <span style="color: #008000; font-weight: bold">nil</span>)
+
+<span style="color: #408080; font-style: italic">;; Before exiting</span>
+(<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">gc-cons-threshold</span> <span style="color: #19177C">16777216</span>
+      <span style="color: #19177C">gc-cons-percentage</span> <span style="color: #19177C">0.1</span>
+      <span style="color: #19177C">file-name-handler-alist</span> <span style="color: #008000; font-weight: bold">last-</span><span style="color: #19177C">file-name-handler-alist</span>)
+</pre></div>
+
+		  </div> <br />
+		  <div>
+			<p> Go to column </p>
+			<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/go-to-column</span> (<span style="color: #19177C">column</span>)
+  <span style="color: #BA2121">&quot;By default M-g M-g goes to line. Here is goto column.</span>
+<span style="color: #BA2121">  M-g -&gt; go to line, M-g c is go to character&quot;</span>
+  (<span style="color: #19177C">interactive</span> <span style="color: #BA2121">&quot;nColumn: &quot;</span>)
+  (<span style="color: #19177C">move-to-column</span> <span style="color: #19177C">column</span> <span style="color: #19177C">t</span>))
+(<span style="color: #008000; font-weight: bold">global-set-</span><span style="color: #19177C">key</span> (<span style="color: #19177C">kbd</span> <span style="color: #BA2121">&quot;M-g M-c&quot;</span>) <span style="color: #408080; font-style: italic">#&#39;sk/go-to-column)</span>
+</pre></div>
+
+		  </div> <br/>
+		  <div>
+			<p> Right click to search a word </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/click-to-search</span> (<span style="color: #008000; font-weight: bold">*</span><span style="color: #19177C">click</span>)
+  (<span style="color: #19177C">interactive</span> <span style="color: #BA2121">&quot;e&quot;</span>)
+  (<span style="color: #008000; font-weight: bold">let</span> ((<span style="color: #19177C">p1</span> (<span style="color: #19177C">posn-point</span> (<span style="color: #19177C">event-start</span> <span style="color: #008000; font-weight: bold">*</span><span style="color: #19177C">click</span>))))
+    (<span style="color: #19177C">goto-char</span> <span style="color: #19177C">p1</span>)
+    (<span style="color: #19177C">isearch-forward-symbol-at-point</span>)))
+(<span style="color: #008000; font-weight: bold">global-set-</span><span style="color: #19177C">key</span> (<span style="color: #19177C">kbd</span> <span style="color: #BA2121">&quot;&lt;mouse-3&gt;&quot;</span>) <span style="color: #666666">&#39;</span><span style="color: #19177C">sk/click-to-search</span>)
+</pre></div>
+
+		  </div> <br/>
+		  <div>
+			<p> Scroll down on highlighted region to execute asynchronously (inspired by the Acme editor from Plan9) </p>
+			<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/run</span> ()
+  (<span style="color: #19177C">interactive</span>)
+  (<span style="color: #008000; font-weight: bold">let</span> ((<span style="color: #19177C">region</span> (<span style="color: #19177C">buffer-substring-no-properties</span> (<span style="color: #19177C">region-beginning</span>) (<span style="color: #19177C">region-end</span>))))
+    (<span style="color: #19177C">async-shell-command</span> <span style="color: #19177C">region</span>)))
+(<span style="color: #008000; font-weight: bold">global-set-</span><span style="color: #19177C">key</span> (<span style="color: #19177C">kbd</span> <span style="color: #BA2121">&quot;C-c r&quot;</span>) <span style="color: #666666">&#39;</span><span style="color: #19177C">sk/run</span>)
+(<span style="color: #008000; font-weight: bold">global-set-</span><span style="color: #19177C">key</span> (<span style="color: #19177C">vector</span> (<span style="color: #008000; font-weight: bold">list</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">control</span> <span style="color: #19177C">mouse-wheel-up-event</span>)) <span style="color: #666666">&#39;</span><span style="color: #19177C">sk/run</span>)
+</pre></div>
+
+		  </div> <br/>
+
+		  
+		  <div>
+			<p> Better compilation buffer </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/compilation-hook</span> ()
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">compilation-scroll-output</span> <span style="color: #008000; font-weight: bold">nil</span>)
+  (<span style="color: #19177C">make-local-variable</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">truncate-lines</span>)
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">truncate-lines</span> <span style="color: #008000; font-weight: bold">nil</span>)
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">compilation-error-screen-columns</span> <span style="color: #008000; font-weight: bold">nil</span>))
+(<span style="color: #008000; font-weight: bold">add-</span><span style="color: #19177C">hook</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">compilation-mode-hook</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">sk/compilation-hook</span>)
+</pre></div>
+
+			</div> <br/>
+ <div>
+			<p> You don't need a clang-format package </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #408080; font-style: italic">;; Clang format is from https://github.com/filcab/elisp/blob/master/clang-format.el</span>
+(<span style="color: #19177C">defvar</span> <span style="color: #19177C">clang-format-binary</span> <span style="color: #BA2121">&quot;clang-format&quot;</span>)
+(<span style="color: #19177C">defun</span> <span style="color: #19177C">clang-format</span> (<span style="color: #19177C">styleformat</span> <span style="color: #008000; font-weight: bold">begin</span> <span style="color: #19177C">end</span>)
+  (<span style="color: #19177C">interactive</span>)
+  (<span style="color: #008000; font-weight: bold">let</span><span style="color: #19177C">*</span> ((<span style="color: #19177C">orig-windows</span> (<span style="color: #19177C">get-buffer-window-list</span> (<span style="color: #19177C">current-buffer</span>)))
+         (<span style="color: #19177C">orig-window-starts</span> (<span style="color: #19177C">mapcar</span> <span style="color: #408080; font-style: italic">#&#39;window-start orig-windows))</span>
+         (<span style="color: #19177C">orig-point</span> (<span style="color: #19177C">point</span>)))
+    (<span style="color: #19177C">unwind-protect</span>
+        (<span style="color: #19177C">call-process-region</span> (<span style="color: #19177C">point-min</span>) (<span style="color: #19177C">point-max</span>) <span style="color: #19177C">clang-format-binary</span>
+                             <span style="color: #19177C">t</span> (<span style="color: #008000; font-weight: bold">list</span> <span style="color: #19177C">t</span> <span style="color: #008000; font-weight: bold">nil</span>) <span style="color: #008000; font-weight: bold">nil</span>
+                             <span style="color: #BA2121">&quot;-offset&quot;</span> (<span style="color: #19177C">number-to-string</span> (<span style="color: #19177C">1-</span> <span style="color: #008000; font-weight: bold">begin</span>))
+                             <span style="color: #BA2121">&quot;-length&quot;</span> (<span style="color: #19177C">number-to-string</span> (<span style="color: #19177C">-</span> <span style="color: #19177C">end</span> <span style="color: #008000; font-weight: bold">begin</span>))
+                             <span style="color: #BA2121">&quot;-cursor&quot;</span> (<span style="color: #19177C">number-to-string</span> (<span style="color: #19177C">1-</span> (<span style="color: #19177C">point</span>)))
+                             <span style="color: #BA2121">&quot;-assume-filename&quot;</span> (<span style="color: #19177C">buffer-file-name</span>)
+                             <span style="color: #BA2121">&quot;-style&quot;</span> <span style="color: #19177C">styleformat</span>)
+      (<span style="color: #19177C">goto-char</span> (<span style="color: #19177C">point-min</span>))
+      (<span style="color: #008000; font-weight: bold">let</span> ((<span style="color: #19177C">json-output</span> (<span style="color: #19177C">json-read-from-string</span>
+                          (<span style="color: #19177C">buffer-substring-no-properties</span>
+                           (<span style="color: #19177C">point-min</span>) (<span style="color: #19177C">line-beginning-position</span> <span style="color: #19177C">2</span>)))))
+        (<span style="color: #008000; font-weight: bold">delete-</span><span style="color: #19177C">region</span> (<span style="color: #19177C">point-min</span>) (<span style="color: #19177C">line-beginning-position</span> <span style="color: #19177C">2</span>))
+        (<span style="color: #19177C">goto-char</span> (<span style="color: #19177C">1+</span> (<span style="color: #19177C">cdr</span> (<span style="color: #008000; font-weight: bold">assoc</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">Cursor</span> <span style="color: #19177C">json-output</span>))))
+        (<span style="color: #008000; font-weight: bold">dotimes</span> (<span style="color: #008000; font-weight: bold">index</span> (<span style="color: #008000; font-weight: bold">length</span> <span style="color: #19177C">orig-windows</span>))
+          (<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">window-start</span> (<span style="color: #008000; font-weight: bold">nth</span> <span style="color: #008000; font-weight: bold">index</span> <span style="color: #19177C">orig-windows</span>)
+                            (<span style="color: #008000; font-weight: bold">nth</span> <span style="color: #008000; font-weight: bold">index</span> <span style="color: #19177C">orig-window-starts</span>)))))))
+
+(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/clang-format-buffer</span> ()
+  (<span style="color: #19177C">interactive</span>)
+  (<span style="color: #19177C">clang-format</span> <span style="color: #BA2121">&quot;Google&quot;</span> (<span style="color: #19177C">point-min</span>) (<span style="color: #19177C">point-max</span>)))
+(<span style="color: #19177C">defun</span> <span style="color: #19177C">llvm/clang-format-buffer</span> ()
+  (<span style="color: #19177C">interactive</span>)
+  (<span style="color: #19177C">clang-format</span> <span style="color: #BA2121">&quot;LLVM&quot;</span> (<span style="color: #19177C">point-min</span>) (<span style="color: #19177C">point-max</span>)))
+</pre></div>
+
+			</div> <br/>
+		  <div>
+			<p> You don't need a CMake package </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">(<span style="color: #19177C">defun</span> <span style="color: #19177C">sk/set-compile-from-cmake</span> ()
+  (<span style="color: #19177C">interactive</span>)
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">splitdir</span> (<span style="color: #19177C">split-string</span> <span style="color: #008000; font-weight: bold">default-directory</span> <span style="color: #BA2121">&quot;/&quot;</span>))
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">p</span> (<span style="color: #008000; font-weight: bold">expand-</span><span style="color: #19177C">file-name</span> <span style="color: #BA2121">&quot;&quot;</span> <span style="color: #BA2121">&quot;/&quot;</span>))
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">m</span> <span style="color: #008000; font-weight: bold">nil</span>)
+  (<span style="color: #008000; font-weight: bold">catch</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">found</span>
+	(<span style="color: #008000; font-weight: bold">dolist</span> (<span style="color: #19177C">d</span> <span style="color: #19177C">splitdir</span>)
+	  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">p</span> (<span style="color: #008000; font-weight: bold">expand-</span><span style="color: #19177C">file-name</span> <span style="color: #19177C">d</span> <span style="color: #19177C">p</span>))
+	  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">m</span> (<span style="color: #008000; font-weight: bold">expand-</span><span style="color: #19177C">file-name</span> <span style="color: #BA2121">&quot;CMakeLists.txt&quot;</span> <span style="color: #19177C">p</span>))
+	  (<span style="color: #008000; font-weight: bold">if</span> (<span style="color: #19177C">file-exists-p</span> <span style="color: #19177C">m</span>)
+		  (<span style="color: #008000; font-weight: bold">throw</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">found</span> <span style="color: #19177C">m</span>))))
+  (<span style="color: #008000; font-weight: bold">unless</span> <span style="color: #19177C">m</span> (<span style="color: #19177C">error</span> <span style="color: #BA2121">&quot;CMakeLists not found in path, ignoring...&quot;</span>))
+  (<span style="color: #008000; font-weight: bold">setq</span> <span style="color: #19177C">sk/build-dir</span> (<span style="color: #19177C">concat</span> (<span style="color: #19177C">file-name-directory</span> <span style="color: #19177C">m</span>) <span style="color: #BA2121">&quot;build&quot;</span>))
+  (<span style="color: #008000; font-weight: bold">unless</span> (<span style="color: #19177C">file-exists-p</span> <span style="color: #19177C">sk/build-dir</span>) (<span style="color: #19177C">error</span> <span style="color: #BA2121">&quot;CMakeLists exists but build directory not found&quot;</span>))
+  (<span style="color: #008000; font-weight: bold">set</span> (<span style="color: #19177C">make-local-variable</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">compile-command</span>) (<span style="color: #19177C">concat</span> <span style="color: #BA2121">&quot;cmake --build &quot;</span> (<span style="color: #19177C">shell-quote-argument</span> <span style="color: #19177C">sk/build-dir</span>))))
+(<span style="color: #008000; font-weight: bold">add-</span><span style="color: #19177C">hook</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">c-mode-common-hook</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">sk/set-compile-from-cmake</span>)
+</pre></div>
+
+		  </div> <br/>
+
+			<p> You don't need a solarized package </p>
+<!-- HTML generated using hilite.me --><div style="background: #f8f8f8; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #408080; font-style: italic">;; Theme. What setting controls what?</span>
+<span style="color: #408080; font-style: italic">;; comment := content inside /**/ or after // or ;;</span>
+<span style="color: #408080; font-style: italic">;; comment delimiter := // or /**/ in C or ;; in lisp</span>
+<span style="color: #408080; font-style: italic">;; constant := in std::string, the std</span>
+<span style="color: #408080; font-style: italic">;; function name := void Do(), the Do</span>
+<span style="color: #408080; font-style: italic">;; keyword := static, return keywords</span>
+<span style="color: #408080; font-style: italic">;; string := content inside &quot;&quot;</span>
+<span style="color: #408080; font-style: italic">;; type := std::string s; the string (std and s are covered elsewhere).</span>
+<span style="color: #408080; font-style: italic">;; variable name := void Traverse(BST *tree); the tree</span>
+<span style="color: #408080; font-style: italic">;; preprocessor := #include</span>
+
+<span style="color: #408080; font-style: italic">;; Theme: Solarized</span>
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-builtin-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#ffffff&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-comment-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#44b340&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-comment-delimiter-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#8cde94&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-constant-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#7ad0c6&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-doc-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;44b340&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-function-name-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#ffffff&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-keyword-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#ffffff&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-string-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#2ec09c&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-type-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#8cde94&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-variable-name-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#c1d1e3&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-preprocessor-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#8cde94&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">font-lock-warning-face</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#ffaa00&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">region</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">background</span> <span style="color: #BA2121">&quot;#0000ff&quot;</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;nil&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">fringe</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">background</span> <span style="color: #BA2121">&quot;#062329&quot;</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;white&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">highlight</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">background</span> <span style="color: #BA2121">&quot;#0000ff&quot;</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;nil&quot;</span>)
+(<span style="color: #008000; font-weight: bold">set-</span><span style="color: #19177C">face-attribute</span> <span style="color: #666666">&#39;</span><span style="color: #19177C">mode-line</span> <span style="color: #008000; font-weight: bold">nil</span> <span style="color: #666666">:</span><span style="color: #19177C">background</span> <span style="color: #BA2121">&quot;#d1b897&quot;</span> <span style="color: #666666">:</span><span style="color: #19177C">foreground</span> <span style="color: #BA2121">&quot;#062329&quot;</span>)
+(<span style="color: #008000; font-weight: bold">add-</span><span style="color: #19177C">to-list</span> <span style="color: #666666">&#39;</span><span style="color: #008000; font-weight: bold">default-</span><span style="color: #19177C">frame-alist</span> <span style="color: #666666">&#39;</span>(<span style="color: #19177C">cursor-color</span> <span style="color: #19177C">.</span> <span style="color: #BA2121">&quot;white&quot;</span>))
+(<span style="color: #008000; font-weight: bold">add-</span><span style="color: #19177C">to-list</span> <span style="color: #666666">&#39;</span><span style="color: #008000; font-weight: bold">default-</span><span style="color: #19177C">frame-alist</span> <span style="color: #666666">&#39;</span>(<span style="color: #19177C">foreground-color</span> <span style="color: #19177C">.</span> <span style="color: #BA2121">&quot;#d1b897&quot;</span>))
+(<span style="color: #008000; font-weight: bold">add-</span><span style="color: #19177C">to-list</span> <span style="color: #666666">&#39;</span><span style="color: #008000; font-weight: bold">default-</span><span style="color: #19177C">frame-alist</span> <span style="color: #666666">&#39;</span>(<span style="color: #19177C">background-color</span> <span style="color: #19177C">.</span> <span style="color: #BA2121">&quot;#292929&quot;</span>)) <span style="color: #408080; font-style: italic">;; graybg #292929 bluebg #062329</span>
+</pre></div>
+
+		  </div> <br/>
+
+		  
+        </td>
+      </tr>
+    </table>
+
+  </body>
+  
+</html>
