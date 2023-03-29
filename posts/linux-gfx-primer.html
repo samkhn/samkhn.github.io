@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming">
+
+    <style>
+    </style>
+
+    <title> Linux Graphics Primer </title>
+  </head>
+
+  <body>
+
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+
+    <h2 style="text-align: center;"> Linux Graphics Primer </h2>
+
+    <div class="date" style="text-align: center;"><small> Published: March 29, 2023</small></div>
+    <br /> <p />
+
+    <table cellspacing=0 cellpadding=0 border=0>
+      <tr>
+        <td width=10 />
+        <td valign=top>
+Userspace programs use libdrm to talk to the DRM subsystem.
+<a href="https://gitlab.freedesktop.org/mesa/drm">libdrm</a> provides a set of methods that use ioctl syscall to talk to DRM.
+<code>
+$ ls /dev/dri/
+</code>
+prints card<N> and renderD<N>, where N is a non-negative int. Let's say card0 and renderD128.
+card0 is the file that represents the graphics card. This is the primary node.
+renderD128 represents a render node, which is provided by DRM as a character device.
+The DRM API requires that unprivelged clients to authenticate to a DRM master client.
+To allow some processes to access GPU resources without auth, render nodes were introduces.
+Render nodes provide fewer controls (cannot do privelged ioctl or kernel mode switches (more on that below).
+Targeted for off screen rendering and GPGPU.
+GPU driver must advertise that it supports render nodes in order for the render file to appear.
+				<br/>
+				<br/>
+DRM = direct rendering manager.
+DRM manages multiple programs trying to access GPU hardware
+(before it was possible for one process to hijack it completely, DRM subsystem was introduced to resolve this).
+DRM core API consists of a generic API (which includes GEM and KMS) and a specific driver API.
+Vendors implement a DRM driver that registers to the DRM core, implements core parts of the DRM API and can also provide its own functions.
+<a href="https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/radeon/radeon_device.c">Example driver</a>.
+				<br/>
+				<br/>
+DRM core has two memory managers: TTM (translation table manager) and GEM (graphics execution manager).
+TTM can support both UMA and NUMA architectures but is more complex than GEM.
+Provides control over VRAM that a CPU won't be able to read/write.
+Vendor driver implementations will usually create a struct that wraps/implements TTM (<a href=""https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.h#L69>example with Radeon</a>). 
+<code>struct drm_global_reference</code> contains a field called <code>enum ttm_global_types global_type;</code>.
+Important parts of TTM are
+buffer objects and graphics address remapping table (GART) which gives a GPU driver DMA to host system memory for texture, polygon meshes.
+(note: GART system was later used for I/O virtualization with disk controllers, neat!)
+scheduling and fences (for a GPU to tell userspace that some resource is no longer used).
+<code>
+struct drm_sched_[rq|fence|entity|job];
+struct drm_gpu_scheduler;
+</code>
+				<br/>
+				<br/>
+Any linux device driver can implement the DMA buffer sharing API to share DMA buffers across devices.
+This was used to implement PRIME, a system for sharing framebuffers between DRM drivers of integrated and discrete graphics cards, thus allowing for GPU hotswapping.
+(two new ioctls: convert GEM handle to DMA-BUF handle, convert DMA-BUF handle to GEM handle).
+<a href="https://lwn.net/Articles/779472/">Further reading</a>
+				<br/>
+				<br/>
+GEM is the graphics execution manager and was built in response to TTM complexity.
+It abstracts away NUMA complexity.
+<code>
+struct drm_gem_[create|open|close|flink] p;
+int ret = ioctl (fd, DRM_IOCTL_GEM_[CREATE|OPEN|CLOSE|FLINK], &p);
+</code>
+NOTE: some TTM drivers will still implement GEM API e.g. Radeon.
+				<br/>
+				<br/>
+KMS is the kernel mode-switch. It manages the display controller and the last step of the rendering pipeline.
+KMS sits on the die of the GPU and communicates with the monitor.
+If you want to change the resolution or refresh rate, these are the bits you change.
+<ul>
+<li>Each CRTC represents a scanout engine of the display controller pointing to a framebuffer.
+CRTC takes the pixel data in the framebuffer and generates a video mode timing signal using a PLL circuit.
+There can be multiple CRTCs (one for each display, each with their own frame buffer).
+There can also be multiple framebuffers (including secondary ones for real time rendering use cases).</li>
+<li>Planes are memory objects containing buffers that feed the CRTC framebuffer.</li>
+<li>Connectors represent physical connector (VGA, DVI, DisplayPort, HDMI). Kernel stores connection status, EDID (extended display identification) data, DPMS (display power management signaling e.g. put monitor to sleep).
+Connectors can receive signals from one encoder at a time.
+Each connector type can only support a subset of encoders.</li>
+<li>Kernel mode-switch chooses frequency and propogates it to encoder clocks.
+Encoders represent the hardware block that converts digital signal of buffer to analog signal that a display can show.
+e.g. transition-minimized differential signaling used by HDMI and DVI.</li>
+<ul>
+				<br/>
+				<br/>
+        </td>
+      </tr>
+    </table>
+At this point you're inside the GPU. Checkout AMD and NVIDIA docs for more here :). Check out <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html">NVIDIA PTX ISA</a> or <a href="https://www.youtube.com/watch?v=_ilAL-1-moA&list=PL-ZzkbB7kcKjoE3-q_-6eL49XRqqcWZeJ&index=21">AMD talk: From Source to ISA</a>
+  </body>
+</html>
