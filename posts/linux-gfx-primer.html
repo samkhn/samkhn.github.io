@@ -58,7 +58,7 @@ Vendors implement a DRM driver that registers to the DRM core, implements core p
 DRM core has two memory managers: TTM (translation table manager) and GEM (graphics execution manager).
 TTM can support both UMA and NUMA architectures but is more complex than GEM.
 Provides control over VRAM that a CPU won't be able to read/write.
-Vendor driver implementations will usually create a struct that wraps/implements TTM (<a href=""https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.h#L69>example with Radeon</a>). 
+Vendor driver implementations will usually create a struct that wraps/implements TTM (<a href="https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.h#L69">example with Radeon</a>).
 <code>struct drm_global_reference</code> contains a field called <code>enum ttm_global_types global_type;</code>.
 Important parts of TTM are
 buffer objects and graphics address remapping table (GART) which gives a GPU driver DMA to host system memory for texture, polygon meshes.
