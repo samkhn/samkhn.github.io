@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming, x86, Linux, paging, real mode, protected, I/O, memory mapped I/O, userspace drivers, NIC, PCI, UEFI, BIOS, ACPI">
+
+    <style>
+    </style>
+
+    <title> x86 Memory Mapped I/O </title>
+  </head>
+
+  <body>
+
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+
+    <h2 style="text-align: center;"> x86 Memory Mapped I/O </h2>
+
+    <div class="date" style="text-align: center;"><small> Published: May 8, 2023</small></div>
+    <br /> <p />
+
+    <p>
+
+    When an Intel x86 CPU asks for an address, it'll be look like <code>mov 0x500 eax</code> or <code>out imm8 eax</code>
+(0x500 and imm8 are addresses, eax is a register).
+Using just loads and stores as a mechanism, a modern CPU and a well built kernel can talk to both memory and IO devices.
+
+<h3> x86 Address Lookup via the MMU </h3>
+
+Depending on the state of the control registers, addresses in x86 are either real or protected or paging mode. <br />
+
+<h4>Real mode</h4>
+BIOS initializes CPU in real mode.
+Real mode address space limited to 1 MiB using 20 bits to address memory (8086 chips had 20 address pins). <br />
+[16 bit segment selection][16 bit offset into 2^16 or 64KiB size page] <br />
+physical_address : = segment_part × 16 + offset (if the address line A20 is enabled) <br />
+physical_address : = segment_part × 16 + offset mod 2^20 (if A20 is off) <br />
+You'll notice though that Intel chips at this time had 16 bits only.
+They got around the limit by bit shifting the segment selection to left by 4 bits. Last 4 bits of segment are always 0.
+Then they add last 16 bit offset.
+Gate A20 is used to extend past 20 bit limits and access upper region. <br />
+Warning: segments are guarenteed to be 64 KiB. There is no guarentee they won't overlap.
+-> No memory protection means segments overlap and programs can overwrite each others memory.
+
+<h4>Protected mode</h4>
+32 bits for addressing. 4 GB total.
+To switch from real to protected, enable a20, disable interrupts and load GDT. <br />
+[bits 15-3 indexes entry inside description table][bit 2 for inside GDT or LDT][bits 1&0 denoted privelege of the request where 3 is highest and 0 is lowest] <br />
+GDT (global descriptor table) contains pointers to LDTs (local descriptor tables).
+Descriptor table entries store the real linear address of a segment, control bits, and segment size.
+
+<h4>Paging</h4>
+Paging involves mapping virtual address ranges to physical address ranges.
+Paging is enabled via a control register bit while in protected mode.
+CR3 holds address of current page directory for the process.
+Intel CPUs typically have dedicated MMUs that can do hardware lookup using CR3 as the starting point. <br />
+<ul>With 32 bit addresses and 4KiB pages:
+	<li>CR3 points to relevant page directory.</li>
+	<li>[bits 31 to 22 select relevant page directory entry, which points to a page table]</li>
+	<li>[bits 21 to 12 select page table entry within the aforementioned page table]</li>
+	<li>[bits 11 to 0 select an offset into a 4KiB page. Where we land is the desired physical address].</li>
+</ul>
+<ul>With 64 bits, because addressing memory with 64 bits can make chip manuf harder, manufacturers have elected to using 48 bits.
+We have similar process here.
+<li>CR3 points to the highest level page map level 4.</li>
+<li>[bits 47 to 39 select page map level 4 table entry, which points to a page directory pointer table]</li>
+<li>[bits 38 to 30 select a page directory pointer entry, which points to a page directory table]</li>
+<li>[bits 29 to 21 select a page directory entry, which points to a page table]</li>
+<li>[bits 20 to 12 select a page table entry, which points to a physical page frame]</li>
+<li>[bits 11 to 0 select a physical address].</li>
+Bits 64 to 48 are typically not used for paging unless you explicitly set a 5 level page table but that is beyond the scope of this.
+</ul>
+
+<h3>Virtual address translation from a typical i7 pov</h3>
+So an i7 CPU address lookup e.g. <code>mov 0x5000 eax</code> involves <br />
+lookup:<br />
+&emsp;lookup in the TLB cache for if we have seen the virtual to physical mapping before. if so, goto physical address. otherwise <br />
+&emsp;do MMU lookup for the VM:PM mapping using the aforementioned lookup. returns a physical address. goto physical address. <br />
+physical address:<br />
+&emsp;check L1 d cache. if cache hit, return it. otherwise <br />
+&emsp;check L2 cache. if cache hit, return it. otherwise <br />
+&emsp;check L3 cache. if cache hit, return it. otherwise<br />
+&emsp;main memory lookup. update cache lines, evicting necessary entries based on cache coherency policy. <br />
+
+<h3>Memory mapping I/O regions</h3>
+So we use virtual addresses to access RAM. We can also apply the same principle to IO devices.
+When the CPU issues a x86 load/store, they internally translate to the physical address and talk to a memory controller that manages the physical memory.
+This same mechanism (MMU translation) is used to communicate with IO devices in a mechanism called memory-mapped I/O. <br />
+
+<h4>Booting</h4>
+This address is configured during boot.
+During system initialization, the boot firmware will talk to the devices on the motherboard.
+When the firmware detects, say, a PCI device, the firware will write an address to the PCI device's Base Address Registers (henceforth, BAR).
+The PCI device will use these BARs to know where to communicate.
+Early motherboard boot firmware that complies with UEFI will enumerate the set of devices/hardware that was detected and store what addresses it gave out in an ACPI table.
+This hardware list is typically a tree rooted at a RSDP or Root System Description Pointer.
+The tree includes individual CPU cores, memory, controllers, bus controllers and devices.
+For UEFI compliant bootloaders, an EFI_SYSTEM_TABLE struct will be readable from early booting environments.
+For traditional BIOS systems, you'll have to search the BIOS Data Area and Extended BIOS Data Area (BDA, EBDA respectively) for the string "RSD PTR ".<br /><br />
+
+When a kernel boots, it can (and should) traverse the tree to store its own internal version.
+Along the way, it can update its memory management subsystem such that writes to certain virtual addresses translate to the regions mapped the device I/O.
+PCI devices can request the kernel to load certain drivers and inform drivers that they are listening at a firmware assigned address.
+With this setup, a userspace binary can now communicate with the device via the device driver.
+When a device writes data to memory, it can interrupt the kernel. The kernel will then execute the appropriate driver instructions to read the data from memory into a kernel data structure.
+With PCI, the PCI device will write to memory and pass a message to the controller to interrupt the CPU. For those searching, this controller is typically called a PCI Root Complex.
+
+<h4>Example with a NIC</h4>
+Since we are using the MMU here, we have the groundwork for creating drivers in userspace as well. I'll use a PCI based NIC as an example.
+When the NIC receives packets, it'll typically copy it from internal buffers into memory and interrupt the kernel.
+The kernel will ask the appropriate driver to load the packets into skbuffs and process them through the link layer traffic control system.
+Here the kernel does work to decode the packet, determine if it should forward it, drop, white/blacklist the packet, etc.
+Once the driver has done that work and determined that the packet is for a running process on this machine, it'll copy the packets into a userspace page.
+At this point, a recv syscall will return or select/poll will inform the userspace binary that a file descriptor/socket is ready.
+
+<h4>Userspace drivers</h4>
+But...what if you didn't want to do any of this work? e.g. you aren't connected to the public internet and your machine is guarenteed to receive reasonably safe well-structured packets.
+You can skirt the entire kernel packet processing path by remapping the buffer/memory that the NIC writes the packet to to a userspace page and interrupt the kernel only to inform the userspace binary that packets were written.
+If you don't want to pay for the cost of an interrupt, you can even have the userspace binary busy-wait and constantly polling that region for packets, thus saving the NIC the work of invoking an interrupt.
+
+<h3>Tools and frameworks for playing with memory mapped I/O and userspace access to devices</h3>
+The linux kernel provides a few ways to exploit this remapping: uio framework (designed for industrial cards e.g. thermal sensors), vfio (used to "decompose" a device down to a set of memory regions via IOMMU subsystem).
+Outside the kernel, there is netmap, DPDK that use a similar principle.
+    </p>
+
+  </body>
+
+</html>
