@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="samkhn, Samiur, systems, computers, programming">
+
+    <style>
+    </style>
+
+    <title> Stop trying to be clever </title>
+  </head>
+
+  <body>
+
+    <header>
+      [ <a href="../index.html">samkhn Home</a> | Comments or bugs? <a href="../index.html#contact">Contact me</a> ]
+    </header>
+
+    <p>
+      <hr>
+    <p>
+
+    <h2 style="text-align: center;"> Stop trying to be clever </h2>
+
+    <div class="date" style="text-align: center;"><small> Published: February 4, 2025 </small></div>
+    <br /> <p />
+
+    <p> Stop it </p>
+
+    <p> <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> HandleRead(std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> connection) {
+  <span style="color: #888888">// do some things</span>
+}
+
+std<span style="color: #333333">::</span>vector<span style="color: #333333">&lt;</span>pollfd<span style="color: #333333">&gt;</span> poll_args;
+std<span style="color: #333333">::</span>vector<span style="color: #333333">&lt;</span>std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;&gt;</span> fd_to_connection;
+<span style="color: #888888">// some instructions later</span>
+<span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">size_t</span> i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>; i <span style="color: #333333">&lt;</span> poll_args.size(); i<span style="color: #333333">++</span>) {
+  std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> connection <span style="color: #333333">=</span> std<span style="color: #333333">::</span>move(fd_to_connection[poll_args[i].fd]);
+  <span style="color: #008800; font-weight: bold">if</span> (ready <span style="color: #333333">&amp;</span> POLLIN) {
+    fd_to_connection[connection<span style="color: #333333">-&gt;</span>fd] <span style="color: #333333">=</span> std<span style="color: #333333">::</span>move(HandleRead(std<span style="color: #333333">::</span>move(connection)));
+  }
+  <span style="color: #888888">// other</span>
+}
+</pre></div></p>
+
+    <p> Look how clever I was. Thought I could get it into one line </p>
+
+    <p> However, std::move(connection) evaluates and moves connection out of scope. Later call to connection->fd will segfault. </p>
+
+    <p> Grab what you need before you move it... </p>
+
+    <p>
+
+      <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> HandleRead(std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> connection) {
+  <span style="color: #888888">// do some things</span>
+}
+
+std<span style="color: #333333">::</span>vector<span style="color: #333333">&lt;</span>pollfd<span style="color: #333333">&gt;</span> poll_args;
+std<span style="color: #333333">::</span>vector<span style="color: #333333">&lt;</span>std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;&gt;</span> fd_to_connection;
+<span style="color: #888888">// some instructions later</span>
+<span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">size_t</span> i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>; i <span style="color: #333333">&lt;</span> poll_args.size(); i<span style="color: #333333">++</span>) {
+  std<span style="color: #333333">::</span>unique_ptr<span style="color: #333333">&lt;</span>Connection<span style="color: #333333">&gt;</span> connection <span style="color: #333333">=</span> std<span style="color: #333333">::</span>move(fd_to_connection[poll_args[i].fd]);
+  <span style="color: #888888">// solution:</span>
+  <span style="color: #333399; font-weight: bold">int</span> fd_index <span style="color: #333333">=</span> connection<span style="color: #333333">-&gt;</span>fd;
+  <span style="color: #008800; font-weight: bold">if</span> (ready <span style="color: #333333">&amp;</span> POLLIN) {
+    <span style="color: #888888">// better, no segfault:</span>
+    fd_to_connection[fd_index] <span style="color: #333333">=</span> std<span style="color: #333333">::</span>move(HandleRead(std<span style="color: #333333">::</span>move(connection)));
+  }
+  <span style="color: #888888">// other</span>
+}
+</pre></div>
+
+
+      </p>
+
+  </body>
+
+</html>
